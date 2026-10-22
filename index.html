@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Taller de Ingenio</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* Layout: encabezado con "cómo funciona", ficha del alumno, cuatro pestañas (3 actividades + entregar), cada actividad abre con su recuadro de instrucciones. */
+    :root {
+      --bg: #F2F4F1;
+      --surface: #FFFFFF;
+      --ink: #16231F;
+      --muted: #5B6964;
+      --line: #D6DDD8;
+      --accent: #0E7465;
+      --accent-soft: #DCEFEA;
+      --mark: #B57F00;
+      --mark-soft: #FBF0D2;
+      --danger: #B4452F;
+      --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+      --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #101815;
+        --surface: #18221E;
+        --ink: #E6EEEA;
+        --muted: #97A7A0;
+        --line: #2C3A35;
+        --accent: #4CC2AE;
+        --accent-soft: #183A33;
+        --mark: #F0B83A;
+        --mark-soft: #3A2F12;
+        --danger: #E5826C;
+        color-scheme: dark
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #101815;
+      --surface: #18221E;
+      --ink: #E6EEEA;
+      --muted: #97A7A0;
+      --line: #2C3A35;
+      --accent: #4CC2AE;
+      --accent-soft: #183A33;
+      --mark: #F0B83A;
+      --mark-soft: #3A2F12;
+      --danger: #E5826C;
+      color-scheme: dark
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.5
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding-block: 28px 56px;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      display: grid;
+      gap: 22px
+    }
+
+    header {
+      display: grid;
+      gap: 8px
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent)
+    }
+
+    h1 {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.05;
+      margin: 0;
+      text-wrap: balance
+    }
+
+    h1 span {
+      color: var(--mark)
+    }
+
+    .lede {
+      color: var(--muted);
+      margin: 0;
+      max-width: 62ch
+    }
+
+    h2 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.35rem;
+      margin: 0;
+      text-wrap: balance
+    }
+
+    h3 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin: 0
+    }
+
+    .como {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      list-style: none;
+      margin: 6px 0 0;
+      padding: 0;
+      counter-reset: c
+    }
+
+    .como li {
+      counter-increment: c;
+      display: grid;
+      gap: 4px;
+      font-size: 14px;
+      padding: 12px;
+      border-top: 3px solid var(--accent);
+      background: var(--surface);
+      border-radius: 0 0 8px 8px
+    }
+
+    .como li::before {
+      content: "Paso " counter(c);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .06em
+    }
+
+    @media (max-width:720px) {
+      .como {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+      }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid var(--line)
+    }
+
+    .tab {
+      font: 700 15px var(--body);
+      background: none;
+      border: 0;
+      color: var(--muted);
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    .tab .k {
+      font-family: var(--mono);
+      font-size: 11px;
+      border: 1px solid currentColor;
+      border-radius: 4px;
+      padding: 1px 5px;
+      min-width: 1.6em;
+      text-align: center
+    }
+
+    .tab .k.ok {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--surface)
+    }
+
+    .tab[aria-selected="true"] {
+      color: var(--ink);
+      border-bottom-color: var(--accent)
+    }
+
+    .tab.entregar {
+      margin-left: auto;
+      color: var(--mark)
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+      min-width: 0
+    }
+
+    .view {
+      display: grid;
+      gap: 18px
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .between {
+      justify-content: space-between
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px
+    }
+
+    @media (max-width:640px) {
+      .grid3 {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .btn {
+      font: 700 14px var(--body);
+      border-radius: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink)
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--surface)
+    }
+
+    .btn.big {
+      font-size: 16px;
+      padding: 13px 20px
+    }
+
+    .btn.ghost {
+      border-color: transparent;
+      color: var(--muted)
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: default
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0
+    }
+
+    input[type=text],
+    textarea,
+    select {
+      font: 16px var(--body);
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 11px;
+      width: 100%
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical
+    }
+
+    label.f {
+      display: grid;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px
+    }
+
+    label.f small {
+      font-weight: 400;
+      color: var(--muted)
+    }
+
+    /* instrucciones */
+    .instr {
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: grid;
+      gap: 10px;
+      background: var(--surface)
+    }
+
+    .instr ol {
+      margin: 0;
+      padding-left: 1.3em;
+      display: grid;
+      gap: 4px
+    }
+
+    .instr .meta {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .instr .meta b {
+      color: var(--ink)
+    }
+
+    /* nivel */
+    .niveles {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px
+    }
+
+    .niv {
+      font: 15px var(--body);
+      color: var(--ink);
+      background: var(--bg);
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: grid;
+      gap: 2px;
+      text-align: left
+    }
+
+    .niv b {
+      font-family: var(--display);
+      font-size: 1.05rem
+    }
+
+    .niv span {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .niv[aria-checked="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft)
+    }
+
+    @media (max-width:520px) {
+      .niveles {
+        grid-template-columns: 1fr
+      }
+    }
+
+    /* creatividad */
+    .reto {
+      background: var(--mark-soft);
+      border-radius: 10px;
+      padding: 20px;
+      display: grid;
+      gap: 10px
+    }
+
+    .reto p.q {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      line-height: 1.25;
+      margin: 0;
+      text-wrap: balance
+    }
+
+    .lente {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start
+    }
+
+    .letra {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 2.4rem;
+      line-height: 1;
+      color: var(--mark);
+      min-width: 1.2em
+    }
+
+    .timer {
+      font-family: var(--mono);
+      font-size: 2rem;
+      font-variant-numeric: tabular-nums
+    }
+
+    .timer.done {
+      color: var(--danger)
+    }
+
+    .ideas {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+      counter-reset: i
+    }
+
+    .ideas li {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--bg);
+      counter-increment: i
+    }
+
+    .ideas li::before {
+      content: counter(i);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      min-width: 1.4em
+    }
+
+    .ideas li span {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere
+    }
+
+    .ideas li button {
+      background: none;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px
+    }
+
+    .meter {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap
+    }
+
+    .meter i {
+      width: 20px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--line)
+    }
+
+    .meter i.on {
+      background: var(--accent)
+    }
+
+    /* decisiones */
+    .scroll {
+      overflow-x: auto
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 520px
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+      vertical-align: middle
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left
+    }
+
+    thead th {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted)
+    }
+
+    thead input,
+    tbody td:first-child input {
+      font-weight: 700;
+      padding: 6px 8px
+    }
+
+    td select,
+    th select {
+      width: auto;
+      padding: 5px 6px;
+      font-family: var(--mono);
+      font-size: 14px
+    }
+
+    .peso {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 4px
+    }
+
+    .tot {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 500
+    }
+
+    tr.win td {
+      background: var(--accent-soft)
+    }
+
+    .bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--line);
+      margin-top: 4px;
+      overflow: hidden
+    }
+
+    .bar b {
+      display: block;
+      height: 100%;
+      background: var(--accent)
+    }
+
+    .x {
+      background: none;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 15px
+    }
+
+    .veredicto {
+      border-left: 4px solid var(--accent);
+      padding: 6px 0 6px 14px;
+      display: grid;
+      gap: 6px
+    }
+
+    .veredicto p {
+      margin: 0
+    }
+
+    .ejemplo {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: var(--mark-soft);
+      color: var(--mark);
+      padding: 2px 8px;
+      border-radius: 4px
+    }
+
+    /* problemas */
+    .steps {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .step {
+      font: 700 13px var(--body);
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      gap: 6px;
+      align-items: center
+    }
+
+    .step b {
+      font-family: var(--mono);
+      font-weight: 500
+    }
+
+    .step.cur {
+      background: var(--ink);
+      color: var(--surface);
+      border-color: var(--ink)
+    }
+
+    .step.ok {
+      color: var(--accent);
+      border-color: var(--accent)
+    }
+
+    .whys {
+      display: grid;
+      gap: 8px
+    }
+
+    .why {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center
+    }
+
+    .why span {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap
+    }
+
+    .tip {
+      background: var(--accent-soft);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      margin: 0
+    }
+
+    .caso {
+      background: var(--mark-soft);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0
+    }
+
+    /* entregar */
+    .check {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px
+    }
+
+    .check li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--bg)
+    }
+
+    .check li .st {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      white-space: nowrap
+    }
+
+    .check li .st.ok {
+      background: var(--accent);
+      color: var(--surface)
+    }
+
+    .check li .st.no {
+      background: var(--mark-soft);
+      color: var(--mark)
+    }
+
+    .check li div {
+      flex: 1;
+      min-width: 0
+    }
+
+    .check li p {
+      margin: 2px 0 0;
+      font-size: 14px;
+      color: var(--muted)
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--surface);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      max-width: calc(100% - 32px);
+      text-align: center
+    }
+
+    @media (prefers-reduced-motion:no-preference) {
+      .reto {
+        animation: in .35s ease
+      }
+
+      @keyframes in {
+        from {
+          transform: translateY(4px);
+          opacity: .6
+        }
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Facultad de Ingeniería · Actividad de desarrollo de habilidades</div>
+      <h1>Taller de <span>Ingenio</span></h1>
+      <p class="lede">Tres actividades cortas para practicar la creatividad, la toma de decisiones y la solución de
+        problemas con situaciones de la vida diaria. Al terminar descargarás un PDF con tu trabajo para entregarlo a tu
+        profesor(a).</p>
+      <ol class="como">
+        <li>Escribe tus datos y elige tu semestre.</li>
+        <li>Realiza las actividades 1, 2 y 3 en orden. Cada una explica qué hacer.</li>
+        <li>Abre la pestaña <b>Entregar</b> y descarga tu PDF.</li>
+        <li>Envía el PDF a tu profesor(a) para recibir retroalimentación.</li>
+      </ol>
+    </header>
+
+    <section class="panel" aria-labelledby="hDatos">
+      <h2 id="hDatos">Tus datos</h2>
+      <div class="grid3">
+        <label class="f" for="dNom">Nombre completo<input type="text" id="dNom" data-d="nombre"
+            autocomplete="name"></label>
+        <label class="f" for="dGru">Carrera<input type="text" id="dGru" data-d="grupo" placeholder="Ej. ICO / IIA"></label>
+        <label class="f" for="dPro">Tutor(a)<input type="text" id="dPro" data-d="profesor"></label>
+      </div>
+      <div class="row between">
+        <h3>¿En qué semestre estás?</h3><span class="hint" id="nivelDesc"></span>
+      </div>
+      <div class="niveles" role="radiogroup" aria-label="Nivel">
+        <button class="niv" role="radio" data-n="0"><b>Inicial</b><span>1.º a 3.º semestre</span></button>
+        <button class="niv" role="radio" data-n="1"><b>Intermedio</b><span>4.º a 7.º semestre</span></button>
+        <button class="niv" role="radio" data-n="2"><b>Avanzado</b><span>8.º a 10.º semestre</span></button>
+      </div>
+      <p class="hint">Tu avance se guarda automáticamente en este navegador. Si cierras la página, lo encontrarás al
+        volver.</p>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-v="crea"><span class="k" id="k-crea">1</span>Creatividad</button>
+      <button class="tab" role="tab" data-v="deci"><span class="k" id="k-deci">2</span>Toma de decisiones</button>
+      <button class="tab" role="tab" data-v="prob"><span class="k" id="k-prob">3</span>Solución de problemas</button>
+      <button class="tab entregar" role="tab" data-v="ent"><span class="k">PDF</span>Entregar</button>
+    </nav>
+
+    <!-- 1 CREATIVIDAD -->
+    <section class="view" id="v-crea">
+      <div class="instr">
+        <h2>Actividad 1 · Creatividad</h2>
+        <ol>
+          <li>Lee el reto. Si no te convence, presiona <b>Otro reto</b>.</li>
+          <li>Lee la técnica SCAMPER que aparece debajo del reto. Es una pista para pensar de forma diferente.</li>
+          <li>Presiona <b>Iniciar</b> y escribe todas las ideas que se te ocurran hasta que termine el tiempo. Todavía
+            no las juzgues: aquí cuenta la cantidad.</li>
+          <li>Cuando termine el tiempo, elige tu mejor idea y explica por qué la elegiste.</li>
+        </ol>
+        <div class="meta"><span><b>Tiempo:</b> 10 minutos</span><span><b>Se evalúa:</b> cantidad y variedad de ideas,
+            originalidad y justificación</span></div>
+      </div>
+      <div class="reto" id="reto">
+        <div class="row between"><span class="eyebrow">Tu reto</span><button class="btn" id="nuevoReto">Otro reto
+            ↻</button></div>
+        <p class="q" id="retoTxt"></p>
+        <div class="lente">
+          <div class="letra" id="lLetra"></div>
+          <div>
+            <h3 id="lNom"></h3>
+            <p class="hint" id="lPreg" style="color:var(--ink)"></p>
+          </div>
+        </div>
+        <div class="row"><button class="btn ghost" id="otraLente">Cambiar técnica</button></div>
+      </div>
+      <div class="panel">
+        <div class="row between">
+          <div>
+            <h3>Lluvia de ideas</h3>
+            <p class="hint" id="metaTxt"></p>
+          </div>
+          <div class="row"><span class="timer" id="timer">03:00</span><button class="btn primary"
+              id="tGo">Iniciar</button><button class="btn ghost" id="tReset">Reiniciar</button></div>
+        </div>
+        <form class="row" id="ideaForm"><input type="text" id="ideaIn" placeholder="Escribe una idea y presiona Enter"
+            style="flex:1;min-width:200px"><button class="btn" type="submit">Agregar</button></form>
+        <div class="row between">
+          <div class="meter" id="meter"></div><span class="hint" id="ideaCount"></span>
+        </div>
+        <ol class="ideas" id="ideas"></ol>
+      </div>
+      <div class="panel">
+        <h3>Tu mejor idea</h3>
+        <label class="f" for="mejor">¿Cuál de tus ideas elegirías para llevarla a cabo?<select
+            id="mejor"></select></label>
+        <label class="f" for="porque">¿Por qué la elegiste? <small>Explica qué la hace útil, original o posible de
+            realizar.</small><textarea id="porque"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 2 DECISIONES -->
+    <section class="view" id="v-deci" hidden>
+      <div class="instr">
+        <h2>Actividad 2 · Toma de decisiones</h2>
+        <ol>
+          <li>Escribe la decisión que vas a tomar. Puedes usar el ejemplo o escribir una decisión real tuya.</li>
+          <li>En las filas escribe tus <b>opciones</b> (lo que puedes elegir). En las columnas escribe tus
+            <b>criterios</b> (lo que te importa para decidir).</li>
+          <li>Dale un <b>peso</b> a cada criterio: 1 = poco importante, 5 = muy importante.</li>
+          <li><b>Califica</b> cada opción en cada criterio: 1 = malo, 5 = excelente. En criterios como "costo", 5
+            significa "más barato" o "más conveniente".</li>
+          <li>Lee el resultado y responde la pregunta de reflexión.</li>
+        </ol>
+        <div class="meta"><span><b>Tiempo:</b> 15 minutos</span><span><b>Se evalúa:</b> criterios pertinentes,
+            calificaciones coherentes y reflexión</span></div>
+      </div>
+      <div class="panel">
+        <div class="row between"><label class="f" for="dPreg" style="flex:1;min-width:240px">La decisión que voy a
+            tomar<input type="text" id="dPreg"></label><span class="ejemplo" id="ejTag">Ejemplo · puedes
+            modificarlo</span></div>
+        <p class="tip" id="dTip"></p>
+        <div class="scroll">
+          <table id="mat"></table>
+        </div>
+        <div class="row"><button class="btn" id="addOp">+ Opción</button><button class="btn" id="addCr">+
+            Criterio</button><button class="btn ghost" id="dEj">Volver al ejemplo</button><button class="btn ghost"
+            id="dNew">Empezar en blanco</button></div>
+      </div>
+      <div class="panel veredicto" id="ver"></div>
+      <div class="panel">
+        <label class="f" for="reflex"><span id="reflexQ"></span><textarea id="reflex"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 3 PROBLEMAS -->
+    <section class="view" id="v-prob" hidden>
+      <div class="instr">
+        <h2>Actividad 3 · Solución de problemas</h2>
+        <ol>
+          <li>Elige uno de los casos de práctica o escribe un problema tuyo.</li>
+          <li>Avanza por los cinco pasos con el botón <b>Siguiente</b>. Cada paso te dice qué escribir y te muestra un
+            ejemplo.</li>
+          <li>Cuando termines el paso 5, ve a la pestaña <b>Entregar</b>.</li>
+        </ol>
+        <div class="meta"><span><b>Tiempo:</b> 20 minutos</span><span><b>Se evalúa:</b> claridad del problema, análisis
+            de causas y viabilidad del plan</span></div>
+      </div>
+      <div class="panel">
+        <label class="f" for="caso">Caso que vas a resolver<select id="caso"></select></label>
+        <div class="steps" id="steps"></div>
+      </div>
+      <div class="panel" id="paso"></div>
+    </section>
+
+    <!-- ENTREGAR -->
+    <section class="view" id="v-ent" hidden>
+      <div class="instr">
+        <h2>Entregar mi actividad</h2>
+        <ol>
+          <li>Revisa que las tres actividades estén completas. Si falta algo, la lista te dice qué.</li>
+          <li>Presiona <b>Descargar mi PDF</b>.</li>
+          <li>Envía el archivo a tu profesor(a) por el medio que te indique (correo, plataforma, Teams).</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <ul class="check" id="check"></ul>
+        <div class="row"><button class="btn primary big" id="pdfBtn">Descargar mi PDF</button><span class="hint"
+            id="pdfMsg"></span></div>
+        <p class="hint">El PDF incluye tus datos, las tres actividades y una sección en blanco para que tu profesor(a)
+          anote la retroalimentación.</p>
+      </div>
+    </section>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const clone = o => JSON.parse(JSON.stringify(o));
+    function toast(t) { const e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => e.hidden = true, 2200) }
+
+    /* ================= CONTENIDO POR NIVEL ================= */
+    const SCAMPER = [
+      ['S', 'Sustituir', '¿Qué parte, material, persona o paso podrías cambiar por otro?'],
+      ['C', 'Combinar', '¿Qué pasa si juntas esta situación con otra idea, servicio u objeto?'],
+      ['A', 'Adaptar', '¿Cómo se resuelve algo parecido en otro lugar (una tienda, un hospital, un videojuego)? ¿Lo puedes copiar?'],
+      ['M', 'Modificar', '¿Qué harías más grande, más pequeño, más rápido o más frecuente?'],
+      ['P', 'Proponer otros usos', '¿Quién más podría aprovechar esto, o para qué otra cosa serviría?'],
+      ['E', 'Eliminar', '¿Qué pasos, cosas o reglas podrías quitar sin perder lo importante?'],
+      ['R', 'Reorganizar', '¿Qué pasa si cambias el orden, los papeles de las personas o el horario?']];
+    const NIVELES = [
+      {
+        nombre: 'Inicial', desc: 'Situaciones cotidianas de casa, escuela y amigos.', meta: 6, min: 3, nWhy: 3, nAlt: 2,
+        retos: ['Inventa una forma de que tu familia pase menos tiempo con el celular durante la comida.',
+          'Propón cómo ayudar a un compañero nuevo a sentirse parte del grupo en su primera semana.',
+          'Inventa un regalo de cumpleaños original que no cueste dinero.',
+          'Propón ideas para que la espera en el transporte público sea más agradable o útil.',
+          'Inventa una forma de no olvidar las fechas de entrega de tareas.',
+          'Propón cómo reducir la basura que se genera en tu casa en una semana.',
+          'Imagina cómo aprovechar un espacio vacío o abandonado de tu colonia.',
+          'Inventa un juego para que tu grupo se conozca mejor en 15 minutos.'],
+        ejD: {
+          q: '¿Cómo me conviene llegar a la escuela?', cr: [{ n: 'Costo', w: 4 }, { n: 'Tiempo de traslado', w: 5 }, { n: 'Seguridad', w: 5 }, { n: 'Comodidad', w: 2 }],
+          op: [{ n: 'Transporte público', s: [4, 2, 3, 2] }, { n: 'Bicicleta', s: [5, 3, 2, 3] }, { n: 'Que me lleve un familiar', s: [3, 4, 5, 5] }]
+        },
+        tipD: 'Empieza con 2 o 3 criterios que realmente te importen.',
+        reflex: '¿El resultado coincide con lo que pensabas antes de hacer la tabla? ¿Por qué sí o por qué no?',
+        casos: [{ t: 'Estudio para los exámenes pero no me va bien', d: 'Paso varias horas leyendo mis apuntes la noche anterior, pero en el examen se me olvida lo que estudié.' },
+        { t: 'Mi equipo de trabajo no se pone de acuerdo', d: 'Somos cuatro, siempre discutimos qué hacer y al final una sola persona termina haciendo todo el trabajo.' },
+        { t: 'Siempre llego tarde a la primera clase', d: 'Mi clase empieza a las 7:00 y llego entre 7:10 y 7:20 al menos tres veces por semana.' }]
+      },
+      {
+        nombre: 'Intermedio', desc: 'Situaciones de grupo, familia y comunidad.', meta: 8, min: 3, nWhy: 5, nAlt: 3,
+        retos: ['Propón cómo reducir la comida que se desperdicia en una cafetería escolar.',
+          'Organiza un evento para tu grupo con un presupuesto de solo $500.',
+          'Inventa una forma de que los vecinos de una calle participen en mantenerla limpia.',
+          'Propón cómo lograr que más personas usen la biblioteca de su escuela o municipio.',
+          'Inventa una manera de ayudar a personas mayores a hacer trámites o compras.',
+          'Propón cómo reducir el tráfico a la hora de entrada de una escuela.',
+          'Diseña una campaña para reunir fondos para una causa de tu comunidad.',
+          'Propón cómo mejorar la convivencia en un grupo donde hay conflictos.'],
+        ejD: {
+          q: '¿A dónde organizamos el viaje de fin de semestre del grupo?', cr: [{ n: 'Costo por persona', w: 5 }, { n: 'Distancia', w: 3 }, { n: 'Actividades', w: 4 }, { n: 'Seguridad', w: 5 }],
+          op: [{ n: 'Valle de Bravo', s: [3, 4, 5, 4] }, { n: 'Ciudad de México', s: [4, 4, 4, 3] }, { n: 'Ixtapan de la Sal', s: [3, 3, 4, 4] }]
+        },
+        tipD: 'Combina criterios prácticos (costo, tiempo) con criterios que importan a las personas involucradas.',
+        reflex: '¿Qué criterio no incluiste y podría cambiar el resultado? Explica cómo lo cambiaría.',
+        casos: [{ t: 'La tienda de la esquina está perdiendo clientes', d: 'Una tiendita de abarrotes que tenía clientes fijos vende cada mes menos, desde que abrió una cadena a dos cuadras.' },
+        { t: 'El grupo no logra organizar la graduación', d: 'Faltan cuatro meses, no hay acuerdo sobre el lugar ni el presupuesto y cada reunión termina en discusión.' },
+        { t: 'En casa siempre discutimos por las tareas domésticas', d: 'Somos cinco en casa y casi todos los días hay discusiones porque las tareas no se reparten de forma justa.' }]
+      },
+      {
+        nombre: 'Avanzado', desc: 'Situaciones complejas de organizaciones, sociedad y vida profesional.', meta: 10, min: 4, nWhy: 5, nAlt: 3,
+        retos: ['Diseña un emprendimiento social que resuelva una necesidad real de tu comunidad.',
+          'Propón cómo reducir el abandono escolar en las preparatorias de tu región.',
+          'Propón una estrategia para que un pequeño negocio familiar compita con una gran cadena.',
+          'Diseña una campaña para cuidar el bienestar emocional de estudiantes universitarios.',
+          'Propón cómo mejorar la movilidad de las personas en tu ciudad.',
+          'Propón cómo reducir el consumo de agua de una colonia completa.',
+          'Diseña un evento masivo que sea accesible para personas con discapacidad.',
+          'Propón una forma justa de evaluar el trabajo individual dentro de un equipo.'],
+        ejD: {
+          q: '¿Qué hacer al terminar la carrera?', cr: [{ n: 'Ingreso inicial', w: 3 }, { n: 'Crecimiento a largo plazo', w: 5 }, { n: 'Estabilidad', w: 4 }, { n: 'Satisfacción personal', w: 5 }],
+          op: [{ n: 'Trabajar en una empresa', s: [4, 3, 5, 3] }, { n: 'Estudiar un posgrado', s: [2, 5, 3, 4] }, { n: 'Emprender un negocio', s: [1, 4, 1, 5] }]
+        },
+        tipD: 'Incluye criterios de largo plazo, riesgos y efectos sobre otras personas.',
+        reflex: 'Cambia en ±1 el peso de tu criterio más importante. ¿Sigue ganando la misma opción? ¿Qué riesgos tiene la opción ganadora y cómo los reducirías?',
+        casos: [{ t: 'Una cafetería universitaria tira mucha comida', d: 'Al final de cada día se desecha cerca de una cuarta parte de lo que se prepara, mientras algunos alumnos dicen que la comida es cara.' },
+        { t: 'Los alumnos abandonan el equipo deportivo', d: 'De 40 alumnos que entran al equipo representativo cada año, solo 12 siguen después del primer semestre.' },
+        { t: 'Un negocio familiar no crece aunque tiene buenas reseñas', d: 'Un restaurante con muy buenas opiniones en internet tiene las mismas ventas desde hace tres años y los dueños están agotados.' }]
+      }];
+    const PROPIO = { t: 'Un problema propio', d: '' };
+
+    /* Instrucciones de cada paso de Solución de problemas */
+    const PASOS = [
+      {
+        t: 'Definir', h: 'Describe el problema', i: 'Escribe en una o dos frases <b>qué pasa</b>, <b>a quién afecta</b>, <b>cuándo ocurre</b> y <b>qué tan grave es</b>. No escribas todavía la solución.',
+        ej: ['Llego tarde a mi clase de 7:00 tres veces por semana y ya tengo dos retardos que cuentan como falta.', 'La tienda vende alrededor de 30% menos que hace un año y el dueño no sabe si podrá seguir abierto.', 'El 70% de los alumnos que entran al equipo deportivo lo dejan en el primer semestre, por lo que el equipo no logra consolidarse.']
+      },
+      {
+        t: 'Causas', h: 'Encuentra la causa', i: 'Pregúntate <b>"¿por qué pasa esto?"</b> y escribe la respuesta. Luego pregunta "¿por qué?" sobre esa respuesta, y así sucesivamente. La última respuesta suele ser la causa de fondo.',
+        ej: ['¿Por qué llego tarde? Porque salgo a las 6:40. ¿Por qué tan tarde? Porque me cuesta levantarme. ¿Por qué? Porque me duermo después de la 1:00.', '¿Por qué vende menos? Porque la gente compra en la cadena. ¿Por qué? Porque ahí encuentra todo junto y acepta pago con tarjeta…', '¿Por qué lo dejan? Porque no les alcanza el tiempo. ¿Por qué? Porque los entrenamientos chocan con clases…']
+      },
+      {
+        t: 'Alternativas', h: 'Propón soluciones', i: 'Escribe soluciones <b>diferentes entre sí</b> que ataquen la causa que encontraste, no solo el síntoma. Incluye por lo menos una idea poco común.',
+        ej: ['Dejar el celular fuera del cuarto a las 23:00 · Preparar la mochila desde la noche · Cambiarme de horario', 'Aceptar pago con tarjeta · Ofrecer entrega a domicilio por WhatsApp · Especializarse en productos locales', 'Mover los entrenamientos a horarios sin clases · Crear un sistema de tutores entre deportistas · Negociar créditos académicos por participar']
+      },
+      {
+        t: 'Elegir', h: 'Elige la mejor solución', i: 'Selecciona la solución que vas a aplicar y <b>explica por qué</b> es mejor que las otras: ¿es más fácil, más barata, más rápida o ataca mejor la causa?',
+        ej: ['Elijo dejar el celular fuera porque ataca la causa (me duermo tarde) y no cuesta nada.', 'Elijo el pago con tarjeta porque es lo que más mencionan los clientes y cuesta poco implementarlo.', 'Elijo mover los horarios porque es la causa que más mencionaron los alumnos en la encuesta.']
+      },
+      {
+        t: 'Plan', h: 'Haz un plan de acción', i: 'Escribe los <b>primeros pasos concretos</b> para aplicar tu solución, cuándo empiezas y <b>cómo sabrás si funcionó</b>.',
+        ej: ['1) Hoy compro un despertador. 2) Desde el lunes dejo el celular en la sala a las 23:00. Sabré que funcionó si en dos semanas no tengo retardos.', '1) Esta semana contratar una terminal. 2) Avisar a clientes con un letrero. Funcionará si en dos meses las ventas suben 10%.', '1) Reunión con el entrenador y coordinación. 2) Propuesta de horario en un mes. Funcionará si el próximo semestre siguen al menos 25 alumnos.']
+      }];
+
+    /* ================= ESTADO ================= */
+    const KEY = 'taller-ingenio-v3';
+    function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null } catch (e) { return null } }
+    let S = load() || { datos: { nombre: '', grupo: '', profesor: '' }, nivel: 0, tab: 'crea', lv: {} };
+    let saveT; function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)) } catch (e) { } }, 250) }
+    const L = () => NIVELES[S.nivel];
+    function lvState() {
+      const n = S.nivel; if (!S.lv[n]) {
+        const l = NIVELES[n]; S.lv[n] = {
+          crea: { r: Math.floor(Math.random() * l.retos.length), l: Math.floor(Math.random() * 7), ideas: [], mejor: '', porque: '' },
+          deci: Object.assign(clone(l.ejD), { ej: true, reflex: '' }),
+          prob: { c: 0, s: 0, data: {} }
+        }
+      } return S.lv[n]
+    }
+    const C = () => lvState().crea, D = () => lvState().deci, P = () => lvState().prob;
+
+    /* ================= DATOS Y NIVEL ================= */
+    document.querySelectorAll('[data-d]').forEach(i => { i.value = S.datos[i.dataset.d] || ''; i.oninput = () => { S.datos[i.dataset.d] = i.value; save(); renderEnt() } });
+    function setNivel(n) {
+      S.nivel = n; save();
+      document.querySelectorAll('.niv').forEach(b => b.setAttribute('aria-checked', +b.dataset.n === n));
+      $('#nivelDesc').textContent = L().desc;
+      renderCrea(); resetT(); renderD();
+      $('#caso').innerHTML = casos().map((c, i) => `<option value="${i}">${esc(c.t)}</option>`).join(''); renderP(); updateTabs(); renderEnt()
+    }
+    document.querySelectorAll('.niv').forEach(b => b.onclick = () => { setNivel(+b.dataset.n); toast('Nivel ' + L().nombre + '. Tu trabajo de otros niveles se conserva.') });
+
+    /* ================= PESTAÑAS ================= */
+    function show(v) {
+      document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.v === v));
+      ['crea', 'deci', 'prob', 'ent'].forEach(x => $('#v-' + x).hidden = x !== v); S.tab = v; save(); if (v === 'ent') renderEnt()
+    }
+    document.querySelectorAll('.tab').forEach(t => t.onclick = () => show(t.dataset.v));
+    function doneCrea() { const c = C(); return c.ideas.length >= 3 && c.mejor && c.porque.trim().length > 0 }
+    function doneDeci() { const d = D(); return d.op.length >= 2 && d.cr.length >= 1 && d.reflex.trim().length > 0 }
+    function doneProb() { const x = pd(); return !!(x.def.trim() && x.w[0].trim() && x.alt.filter(a => a.trim()).length >= 2 && x.ele && x.plan.trim()) }
+    function updateTabs() { [['crea', doneCrea, '1'], ['deci', doneDeci, '2'], ['prob', doneProb, '3']].forEach(([k, f, n]) => { const e = $('#k-' + k), ok = f(); e.classList.toggle('ok', ok); e.textContent = ok ? '✓' : n }) }
+
+    /* ================= 1 CREATIVIDAD ================= */
+    const rnd = (n, not) => { let x; do { x = Math.floor(Math.random() * n) } while (n > 1 && x === not); return x };
+    function renderCrea() {
+      const c = C(); c.r = Math.min(c.r, L().retos.length - 1);
+      $('#retoTxt').textContent = L().retos[c.r]; const l = SCAMPER[c.l]; $('#lLetra').textContent = l[0]; $('#lNom').textContent = 'Técnica: ' + l[1]; $('#lPreg').textContent = l[2];
+      const r = $('#reto'); r.style.animation = 'none'; r.offsetHeight; r.style.animation = '';
+      renderIdeas(); $('#porque').value = c.porque
+    }
+    function renderIdeas() {
+      const c = C(), meta = L().meta, n = c.ideas.length;
+      $('#metaTxt').textContent = `Meta: ${meta} ideas en ${L().min} minutos.`;
+      $('#ideas').innerHTML = c.ideas.map((t, i) => `<li><span>${esc(t)}</span><button aria-label="Quitar idea" data-i="${i}">×</button></li>`).join('');
+      $('#meter').innerHTML = Array.from({ length: Math.max(meta, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('');
+      $('#ideaCount').textContent = n >= meta ? `${n} ideas · ¡meta cumplida!` : `${n} de ${meta} ideas`;
+      if (c.mejor && !c.ideas.includes(c.mejor)) c.mejor = '';
+      $('#mejor').innerHTML = `<option value="">${n ? '— Selecciona una idea —' : 'Primero escribe tus ideas'}</option>` + c.ideas.map(t => `<option${t === c.mejor ? ' selected' : ''}>${esc(t)}</option>`).join('');
+      save(); updateTabs()
+    }
+    $('#ideas').onclick = e => { if (e.target.dataset.i != null) { C().ideas.splice(+e.target.dataset.i, 1); renderIdeas() } };
+    $('#ideaForm').onsubmit = e => { e.preventDefault(); const v = $('#ideaIn').value.trim(); if (!v) return; C().ideas.push(v); $('#ideaIn').value = ''; renderIdeas() };
+    $('#mejor').onchange = e => { C().mejor = e.target.value; save(); updateTabs() };
+    $('#porque').oninput = e => { C().porque = e.target.value; save(); updateTabs() };
+    $('#nuevoReto').onclick = () => { const c = C(); if (c.ideas.length) { c.ideas = []; c.mejor = ''; c.porque = ''; toast('Nuevo reto: tu lista de ideas empezó de cero') } c.r = rnd(L().retos.length, c.r); c.l = rnd(7, c.l); renderCrea(); resetT() };
+    $('#otraLente').onclick = () => { const c = C(); c.l = rnd(7, c.l); renderCrea() };
+    let left = 180, tick = null;
+    function drawT() { const m = String(Math.floor(left / 60)).padStart(2, '0'), s = String(left % 60).padStart(2, '0'); $('#timer').textContent = `${m}:${s}`; $('#timer').classList.toggle('done', left === 0) }
+    function resetT() { clearInterval(tick); tick = null; left = L().min * 60; $('#tGo').textContent = 'Iniciar'; drawT() }
+    $('#tGo').onclick = () => {
+      if (tick) { clearInterval(tick); tick = null; $('#tGo').textContent = 'Continuar'; return }
+      if (left === 0) left = L().min * 60; $('#tGo').textContent = 'Pausar'; $('#ideaIn').focus();
+      tick = setInterval(() => { left--; drawT(); if (left <= 0) { clearInterval(tick); tick = null; $('#tGo').textContent = 'Iniciar'; toast('¡Tiempo! Ahora elige tu mejor idea y explica por qué.') } }, 1000)
+    };
+    $('#tReset').onclick = resetT;
+
+    /* ================= 2 DECISIONES ================= */
+    const sel = (v, attrs) => `<select ${attrs}>${[1, 2, 3, 4, 5].map(n => `<option${n == v ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
+    function totals(d = D()) { const max = d.cr.reduce((a, c) => a + c.w * 5, 0) || 1; return d.op.map(o => { const t = d.cr.reduce((a, c, j) => a + c.w * (o.s[j] || 1), 0); return { t, p: t / max } }) }
+    function renderD() {
+      const d = D(); $('#dPreg').value = d.q; $('#ejTag').hidden = !d.ej; $('#dTip').textContent = 'Consejo: ' + L().tipD;
+      $('#reflexQ').textContent = 'Reflexión: ' + L().reflex; $('#reflex').value = d.reflex;
+      const T = totals(), best = Math.max(...T.map(x => x.t), 0);
+      let h = '<thead><tr><th>Opciones ↓ / Criterios →</th>' + d.cr.map((c, j) => `<th><input type="text" id="cr${j}" data-cn="${j}" value="${esc(c.n)}" aria-label="Criterio ${j + 1}"><div class="peso">peso ${sel(c.w, `data-cw="${j}" aria-label="Peso del criterio"`)}<button class="x" data-xc="${j}" aria-label="Quitar criterio">×</button></div></th>`).join('') + '<th>Puntaje</th></tr></thead><tbody>';
+      h += d.op.map((o, i) => `<tr class="${T[i].t === best && d.op.length > 1 ? 'win' : ''}"><td><div class="row" style="flex-wrap:nowrap"><input type="text" id="op${i}" data-on="${i}" value="${esc(o.n)}" aria-label="Opción ${i + 1}"><button class="x" data-xo="${i}" aria-label="Quitar opción">×</button></div></td>` +
+        d.cr.map((c, j) => `<td>${sel(o.s[j] || 1, `data-s="${i},${j}" aria-label="Calificación"`)}</td>`).join('') +
+        `<td><span class="tot">${T[i].t}</span><div class="bar"><b style="width:${Math.round(T[i].p * 100)}%"></b></div></td></tr>`).join('');
+      $('#mat').innerHTML = h + '</tbody>'; renderVer(); save(); updateTabs()
+    }
+    function veredicto(d = D()) {
+      const T = totals(d); if (d.op.length < 2 || !d.cr.length) return 'Agrega al menos dos opciones y un criterio para ver el resultado.';
+      const ord = d.op.map((o, i) => ({ n: o.n, ...T[i] })).sort((a, b) => b.t - a.t), gap = ord[0].t - ord[1].t, top = d.cr.reduce((a, c) => c.w > a.w ? c : a, d.cr[0]);
+      return gap === 0 ? `Hay empate entre "${ord[0].n}" y "${ord[1].n}". Revisa los pesos o agrega un criterio que las distinga.`
+        : gap <= 3 ? `"${ord[0].n}" gana por muy poco (${gap} ${gap === 1 ? 'punto' : 'puntos'}). Piensa qué pasaría si cambias el peso de "${top.n}".`
+          : `"${ord[0].n}" es la mejor opción, con ${ord[0].t} puntos (${Math.round(ord[0].p * 100)}% del máximo posible).`
+    }
+    function renderVer() { $('#ver').innerHTML = `<h3>Resultado</h3><p>${esc(veredicto())}</p>` }
+    const touch = () => { D().ej = false; $('#ejTag').hidden = true };
+    $('#mat').addEventListener('input', e => {
+      const d = e.target.dataset, x = D();
+      if (d.cn != null) x.cr[d.cn].n = e.target.value; else if (d.on != null) x.op[d.on].n = e.target.value; else return; touch(); renderVer(); save()
+    });
+    $('#mat').addEventListener('change', e => {
+      const d = e.target.dataset, x = D();
+      if (d.cw != null) x.cr[d.cw].w = +e.target.value; else if (d.s) { const [i, j] = d.s.split(','); x.op[i].s[j] = +e.target.value } else return; touch(); renderD()
+    });
+    $('#mat').addEventListener('click', e => {
+      const d = e.target.dataset, x = D();
+      if (d.xc != null) { x.cr.splice(d.xc, 1); x.op.forEach(o => o.s.splice(d.xc, 1)); touch(); renderD() }
+      if (d.xo != null) { x.op.splice(d.xo, 1); touch(); renderD() }
+    });
+    $('#dPreg').oninput = e => { D().q = e.target.value; touch(); save() };
+    $('#reflex').oninput = e => { D().reflex = e.target.value; save(); updateTabs() };
+    $('#addOp').onclick = () => { const x = D(); x.op.push({ n: 'Opción ' + (x.op.length + 1), s: x.cr.map(() => 3) }); touch(); renderD() };
+    $('#addCr').onclick = () => { const x = D(); x.cr.push({ n: 'Criterio ' + (x.cr.length + 1), w: 3 }); x.op.forEach(o => o.s.push(3)); touch(); renderD() };
+    $('#dEj').onclick = () => { const r = D().reflex; lvState().deci = Object.assign(clone(L().ejD), { ej: true, reflex: r }); renderD(); toast('Ejemplo restaurado') };
+    $('#dNew').onclick = () => { const r = D().reflex; lvState().deci = { q: '', cr: [{ n: 'Criterio 1', w: 3 }, { n: 'Criterio 2', w: 3 }], op: [{ n: 'Opción 1', s: [3, 3] }, { n: 'Opción 2', s: [3, 3] }], ej: false, reflex: r }; renderD(); $('#dPreg').focus() };
+
+    /* ================= 3 PROBLEMAS ================= */
+    const casos = () => [...L().casos, PROPIO];
+    const pd = () => { const p = P(); return p.data[p.c] || (p.data[p.c] = { propio: '', def: '', w: Array(L().nWhy).fill(''), alt: Array(L().nAlt).fill(''), ele: '', por: '', riesgo: '', plan: '', cuando: '', ind: '' }) };
+    $('#caso').onchange = e => { P().c = +e.target.value; P().s = 0; renderP() };
+    function stepDone(i) { const x = pd(); return !!([x.def.trim(), x.w[0].trim(), x.alt.filter(a => a.trim()).length >= 2, x.ele, x.plan.trim()][i]) }
+    function field(id, lab, val, ph, area, key) { return `<label class="f" for="${id}">${lab}${area ? `<textarea id="${id}" data-k="${key || id}" placeholder="${esc(ph)}">${esc(val)}</textarea>` : `<input type="text" id="${id}" data-k="${key || id}" value="${esc(val)}" placeholder="${esc(ph)}">`}</label>` }
+    function renderP() {
+      const p = P(), cs = casos(); p.c = Math.min(p.c, cs.length - 1); $('#caso').value = p.c; const x = pd(), c = cs[p.c], propio = p.c === cs.length - 1, st = PASOS[Math.min(p.s, 4)];
+      const ejI = Math.min(S.nivel, 2);
+      $('#steps').innerHTML = PASOS.map((s, i) => `<button class="step ${i === p.s ? 'cur' : stepDone(i) ? 'ok' : ''}" data-st="${i}"><b>${i + 1}</b>${s.t}</button>`).join('');
+      let h = `<h2>Paso ${p.s + 1} de 5 · ${st.h}</h2><p style="margin:0">${st.i}</p><p class="tip"><b>Ejemplo:</b> ${esc(st.ej[ejI])}</p>`;
+      if (p.s === 0) {
+        h += propio ? field('propio', 'Título breve de tu problema', x.propio, 'Ej. Gasto todo mi dinero antes de la quincena', 0) : `<p class="caso"><b>Caso:</b> ${esc(c.d)}</p>`;
+        h += field('def', 'Describe el problema con tus palabras', x.def, '¿Qué pasa? ¿A quién afecta? ¿Cuándo? ¿Qué tan grave es?', 1)
+      }
+      if (p.s === 1) h += `<div class="whys">` + x.w.map((v, i) => `<div class="why"><span>¿Por qué? ${i + 1}</span><input type="text" id="w${i}" data-w="${i}" value="${esc(v)}" placeholder="${i ? '¿Y eso por qué pasa?' : '¿Por qué ocurre el problema?'}" aria-label="Respuesta ${i + 1}"></div>`).join('') + `</div><p class="hint">Si llegas a una causa que ya puedes cambiar, puedes detenerte antes.</p>`;
+      if (p.s === 2) h += x.alt.map((v, i) => field('a' + i, 'Solución ' + String.fromCharCode(65 + i), v, '', 0, '_alt')).join('') + `<div class="row"><button class="btn" id="addAlt">+ Otra solución</button></div>`;
+      if (p.s === 3) {
+        const opts = x.alt.filter(a => a.trim()); h += (opts.length ? `<label class="f" for="ele">Solución elegida<select id="ele" data-k="ele"><option value="">— Selecciona —</option>${opts.map(o => `<option${o === x.ele ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></label>` : '<p class="caso">Primero escribe tus soluciones en el paso 3.</p>')
+          + field('por', '¿Por qué esta solución y no las otras?', x.por, '', 1) + (S.nivel === 2 ? field('riesgo', '¿Qué podría salir mal y cómo lo evitarías?', x.riesgo, '', 1) : '')
+      }
+      if (p.s === 4) h += field('plan', 'Primeros pasos', x.plan, '1) …\n2) …\n3) …', 1) + `<div class="row" style="align-items:stretch"><div style="flex:1;min-width:200px">${field('cuando', '¿Cuándo empiezas?', x.cuando, 'Ej. El próximo lunes', 0)}</div><div style="flex:2;min-width:220px">${field('ind', '¿Cómo sabrás que funcionó?', x.ind, 'Ej. En dos semanas no tengo retardos', 0)}</div></div>`;
+      h += `<div class="row between"><button class="btn ghost" id="prev" ${p.s === 0 ? 'disabled' : ''}>← Anterior</button>${p.s < 4 ? '<button class="btn primary" id="next">Siguiente →</button>' : '<button class="btn primary" id="goEnt">Ir a Entregar →</button>'}</div>`;
+      $('#paso').innerHTML = h; save(); updateTabs()
+    }
+    $('#steps').onclick = e => { const b = e.target.closest('[data-st]'); if (b) { P().s = +b.dataset.st; renderP() } };
+    $('#paso').addEventListener('input', e => {
+      const x = pd(), d = e.target.dataset;
+      if (d.w != null) x.w[d.w] = e.target.value; else if (d.k === '_alt') x.alt[+e.target.id.slice(1)] = e.target.value; else if (d.k) x[d.k] = e.target.value;
+      save(); updateTabs(); document.querySelectorAll('.step').forEach((b, i) => { if (i !== P().s) b.classList.toggle('ok', stepDone(i)) })
+    });
+    $('#paso').addEventListener('change', e => { if (e.target.id === 'ele') { pd().ele = e.target.value; save(); updateTabs() } });
+    $('#paso').addEventListener('click', e => {
+      const id = e.target.id;
+      if (id === 'next') { P().s++; renderP(); $('#paso').scrollIntoView({ block: 'nearest' }) }
+      if (id === 'prev') { P().s--; renderP() }
+      if (id === 'addAlt') { pd().alt.push(''); renderP() }
+      if (id === 'goEnt') show('ent')
+    });
+
+    /* ================= ENTREGAR ================= */
+    function faltantes() {
+      const f = { crea: [], deci: [], prob: [] }, c = C(), d = D(), x = pd();
+      if (c.ideas.length < 3) f.crea.push(`escribe al menos 3 ideas (llevas ${c.ideas.length})`); if (!c.mejor) f.crea.push('elige tu mejor idea'); if (!c.porque.trim()) f.crea.push('explica por qué la elegiste');
+      if (d.op.length < 2) f.deci.push('escribe al menos 2 opciones'); if (!d.cr.length) f.deci.push('escribe al menos 1 criterio'); if (!d.reflex.trim()) f.deci.push('responde la reflexión');
+      if (!x.def.trim()) f.prob.push('paso 1: describe el problema'); if (!x.w[0].trim()) f.prob.push('paso 2: escribe al menos un "por qué"'); if (x.alt.filter(a => a.trim()).length < 2) f.prob.push('paso 3: escribe al menos 2 soluciones'); if (!x.ele) f.prob.push('paso 4: elige una solución'); if (!x.plan.trim()) f.prob.push('paso 5: escribe tu plan');
+      return f
+    }
+    function renderEnt() {
+      const f = faltantes(), dat = S.datos; const items = [
+        ['Tus datos', [!dat.nombre.trim() && 'escribe tu nombre', !dat.grupo.trim() && 'escribe tu grupo'].filter(Boolean), null],
+        ['Actividad 1 · Creatividad', f.crea, 'crea'], ['Actividad 2 · Toma de decisiones', f.deci, 'deci'], ['Actividad 3 · Solución de problemas', f.prob, 'prob']];
+      $('#check').innerHTML = items.map(([t, fl, v]) => `<li><span class="st ${fl.length ? 'no' : 'ok'}">${fl.length ? 'Pendiente' : 'Completa'}</span><div><b>${t}</b>${fl.length ? `<p>Falta: ${esc(fl.join('; '))}.</p>` : ''}</div>${fl.length && v ? `<button class="btn" data-go="${v}">Completar</button>` : ''}</li>`).join('');
+      const pend = items.reduce((a, i) => a + i[1].length, 0);
+      $('#pdfMsg').textContent = pend ? 'Puedes descargarlo aunque falten cosas, pero se marcarán como "sin respuesta".' : 'Todo listo.'
+    }
+    $('#check').onclick = e => { const v = e.target.dataset.go; if (v) show(v) };
+
+    /* ---------- PDF ---------- */
+    const pdfT = s => String(s ?? '').replace(/[‐-―]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...').replace(/[←-⇿]/g, '->').replace(/[^\x00-\xFF]/g, '');
+    function buildPDF() {
+      const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const W = 210, H = 297, M = 18, CW = W - 2 * M, ACC = [14, 116, 101], INK = [22, 35, 31], MUT = [91, 105, 100]; let y = M;
+      const need = h => { if (y + h > H - 18) { doc.addPage(); y = M } };
+      const color = c => doc.setTextColor(...c);
+      function sec(t) { need(16); y += 3; doc.setFillColor(...ACC); doc.rect(M, y, CW, 8, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255); doc.text(pdfT(t), M + 3, y + 5.5); y += 13; color(INK) }
+      function lab(t) { doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); const ls = doc.splitTextToSize(pdfT(t).toUpperCase(), CW); need(5 + ls.length * 4); color(MUT); ls.forEach(l => { doc.text(l, M, y); y += 4 }); y += 0.5; color(INK) }
+      function note(t) { doc.setFont('helvetica', 'italic'); doc.setFontSize(9.5); color(MUT); doc.splitTextToSize(pdfT(t), CW).forEach(l => { need(4.8); doc.text(l, M, y); y += 4.8 }); y += 1.5; color(INK) }
+      function para(t, ind = 0) {
+        const vacio = !String(t ?? '').trim(); doc.setFont('helvetica', vacio ? 'italic' : 'normal'); doc.setFontSize(10.5); color(vacio ? MUT : INK);
+        const lines = doc.splitTextToSize(pdfT(vacio ? '(sin respuesta)' : t), CW - ind); lines.forEach(l => { need(5.2); doc.text(l, M + ind, y); y += 5.2 }); y += 2.5; color(INK)
+      }
+      function list(arr, mark) { if (!arr.length) { para(''); return } arr.forEach((t, i) => { doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); const pre = mark ? mark(i) : (i + 1) + '.'; const lines = doc.splitTextToSize(pdfT(t || '(sin respuesta)'), CW - 8); need(5.2); color(ACC); doc.text(pdfT(pre), M + 1, y); color(INK); lines.forEach((l, k) => { if (k) need(5.2); doc.text(l, M + 8, y); y += 5.2 }) }); y += 2.5 }
+      const lv = L(), c = C(), d = D(), x = pd(), p = P(), cs = casos(), fecha = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+      /* Encabezado */
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); color(ACC); doc.text('FACULTAD DE INGENIERÍA · TALLER DE INGENIO', M, y); y += 8;
+      doc.setFontSize(20); color(INK); doc.text('Reporte de actividad', M, y); y += 6;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); color(MUT); doc.text(pdfT('Creatividad, toma de decisiones y solución de problemas'), M, y); y += 7;
+      doc.setDrawColor(214, 221, 216); doc.setLineWidth(.3);
+      const ficha = [['Alumno(a)', S.datos.nombre], ['Grupo', S.datos.grupo], ['Profesor(a) / materia', S.datos.profesor], ['Nivel', lv.nombre + ' (' + ['1.º a 3.º', '4.º a 7.º', '8.º a 10.º'][S.nivel] + ' semestre)'], ['Fecha', fecha]];
+      doc.rect(M, y, CW, ficha.length * 6.5 + 3); let fy = y + 5.5; ficha.forEach(([k, v]) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); color(MUT); doc.text(pdfT(k), M + 3, fy); doc.setFont('helvetica', 'normal'); color(INK); doc.text(pdfT(v || '—').slice(0, 80), M + 48, fy); fy += 6.5 }); y = fy + 4;
+      /* 1 */
+      sec('Actividad 1 · Creatividad');
+      lab('Reto'); para(lv.retos[c.r]);
+      lab('Técnica SCAMPER'); para(SCAMPER[c.l][1] + ': ' + SCAMPER[c.l][2]);
+      lab(`Ideas generadas (${c.ideas.length} de ${lv.meta} como meta)`); list(c.ideas);
+      lab('Mejor idea'); para(c.mejor); lab('Justificación'); para(c.porque);
+      /* 2 */
+      sec('Actividad 2 · Toma de decisiones');
+      lab('Decisión'); para(d.q + (d.ej ? '  (usó el ejemplo propuesto)' : ''));
+      if (d.op.length && d.cr.length) {
+        const T = totals(d), best = Math.max(...T.map(t => t.t)); const c0 = 48, ct = 20, cw = (CW - c0 - ct) / d.cr.length;
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); const hdr = d.cr.map(cr => doc.splitTextToSize(pdfT(cr.n + ' (peso ' + cr.w + ')'), cw - 2)); const hh = Math.max(...hdr.map(h => h.length)) * 3.6 + 4;
+        need(hh + d.op.length * 8 + 4); doc.setFillColor(242, 244, 241); doc.rect(M, y, CW, hh, 'F'); color(MUT); doc.text('Opción', M + 2, y + 4.5);
+        hdr.forEach((h, j) => doc.text(h, M + c0 + j * cw + cw / 2, y + 4.5, { align: 'center' })); doc.text('Puntaje', M + CW - ct / 2, y + 4.5, { align: 'center' }); y += hh;
+        d.op.forEach((o, i) => {
+          const win = T[i].t === best && d.op.length > 1; if (win) { doc.setFillColor(220, 239, 234); doc.rect(M, y, CW, 8, 'F') }
+          doc.setFont('helvetica', win ? 'bold' : 'normal'); doc.setFontSize(9.5); color(INK); doc.text(doc.splitTextToSize(pdfT(o.n), c0 - 3)[0], M + 2, y + 5.3);
+          d.cr.forEach((cr, j) => doc.text(String(o.s[j] || 1), M + c0 + j * cw + cw / 2, y + 5.3, { align: 'center' })); doc.text(String(T[i].t), M + CW - ct / 2, y + 5.3, { align: 'center' });
+          doc.line(M, y + 8, M + CW, y + 8); y += 8
+        }); y += 5
+      }
+      lab('Resultado'); para(veredicto(d));
+      lab('Reflexión'); note(lv.reflex); para(d.reflex);
+      /* 3 */
+      sec('Actividad 3 · Solución de problemas');
+      const propio = p.c === cs.length - 1;
+      lab('Caso'); para(propio ? (x.propio || 'Problema propio') : cs[p.c].t);
+      lab('1. Definición del problema'); para(x.def);
+      lab('2. Análisis de causas (¿por qué?)'); list(x.w.filter(w => w.trim()));
+      lab('3. Soluciones propuestas'); list(x.alt.filter(a => a.trim()), i => String.fromCharCode(65 + i) + '.');
+      lab('4. Solución elegida'); para(x.ele); lab('Justificación'); para(x.por);
+      if (S.nivel === 2) { lab('Riesgos y cómo evitarlos'); para(x.riesgo) }
+      lab('5. Plan de acción'); para(x.plan);
+      lab('Inicio'); para(x.cuando); lab('Cómo sabrá que funcionó'); para(x.ind);
+      /* Retroalimentación */
+      doc.addPage(); y = M; sec('Retroalimentación del docente');
+      const crit = ['Creatividad: cantidad, variedad y originalidad de ideas', 'Toma de decisiones: criterios pertinentes y reflexión', 'Solución de problemas: claridad del problema y análisis de causas', 'Solución de problemas: viabilidad del plan de acción', 'Redacción y claridad general'];
+      const niv = ['Excelente', 'Bueno', 'Suficiente', 'Por mejorar'], c0 = 86, cw = (CW - c0) / 4;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setFillColor(242, 244, 241); doc.rect(M, y, CW, 8, 'F'); color(MUT); doc.text('Criterio', M + 2, y + 5.3); niv.forEach((n, j) => doc.text(n, M + c0 + j * cw + cw / 2, y + 5.3, { align: 'center' })); y += 8;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); color(INK);
+      crit.forEach(t => { const ls = doc.splitTextToSize(pdfT(t), c0 - 4), rh = Math.max(11, ls.length * 4.4 + 4); doc.text(ls, M + 2, y + 5.5); niv.forEach((n, j) => { doc.rect(M + c0 + j * cw + cw / 2 - 2.2, y + rh / 2 - 2.2, 4.4, 4.4) }); doc.line(M, y + rh, M + CW, y + rh); y += rh });
+      y += 8; lab('Fortalezas'); for (let i = 0; i < 4; i++) { doc.line(M, y + 5, M + CW, y + 5); y += 8 }
+      y += 3; lab('Aspectos a mejorar'); for (let i = 0; i < 4; i++) { doc.line(M, y + 5, M + CW, y + 5); y += 8 }
+      y += 3; lab('Recomendaciones'); for (let i = 0; i < 3; i++) { doc.line(M, y + 5, M + CW, y + 5); y += 8 }
+      y += 10; doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text('Calificación: ____________', M, y); doc.text('Firma del docente: ______________________', M + CW, y, { align: 'right' });
+      /* pies */
+      const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); color(MUT); doc.text(pdfT((S.datos.nombre || 'Alumno(a)') + ' · ' + (S.datos.grupo || '')), M, H - 10); doc.text(`Página ${i} de ${n}`, W - M, H - 10, { align: 'right' }) }
+      return doc
+    }
+    function fileName() { const n = (S.datos.nombre || 'alumno').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, ''); return `Taller_de_Ingenio_${n || 'alumno'}.pdf` }
+    $('#pdfBtn').onclick = async () => {
+      if (!window.jspdf) { toast('No se pudo cargar el generador de PDF. Revisa tu conexión a internet y recarga la página.'); return }
+      const btn = $('#pdfBtn'); btn.disabled = true; btn.textContent = 'Generando…';
+      try {
+        const blob = buildPDF().output('blob'), name = fileName();
+        let dl = null; try { dl = window.claude && window.claude.use ? await Promise.race([window.claude.use('downloads'), new Promise(r => setTimeout(() => r(null), 4000))]) : null } catch (e) { dl = null }
+        if (dl) { try { await dl.save({ filename: name, data: blob }); toast('PDF descargado. Envíalo a tu profesor(a).') } catch (err) { toast(err && err.code === 'declined' ? 'Descarga cancelada.' : 'No se pudo descargar aquí. Abre el archivo HTML en tu navegador e inténtalo de nuevo.') } }
+        else { const u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('PDF descargado. Envíalo a tu profesor(a).') }
+      } catch (e) { console.error(e); toast('Ocurrió un error al generar el PDF.') }
+      btn.disabled = false; btn.textContent = 'Descargar mi PDF'
+    };
+
+    /* ================= INICIO ================= */
+    setNivel(S.nivel); show(S.tab || 'crea');
+  </script>
+</body>
+
+</html>
